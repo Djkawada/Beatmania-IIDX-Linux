@@ -20,7 +20,7 @@ killall -9 speech-dispatcher 2>/dev/null # Fix #5: Remove accessibility interfer
 if command -v pw-metadata >/dev/null 2>&1; then
     echo "Configuring Audio Hardware (Pipewire)..."
     pw-metadata -n settings 0 clock.force-rate 48000
-    pw-metadata -n settings 0 clock.force-quantum 1024
+    pw-metadata -n settings 0 clock.force-quantum 512
 fi
 
 # 2. Start Asphyxia (Network)
@@ -34,10 +34,10 @@ sleep 5
 
 # 3. Start Game
 # -iidxsounddevice dsound: Use DirectSound (maps to ALSA HQ plug)
-# PIPEWIRE_LATENCY: Specifies the buffer size for the ALSA plugin (1024 samples @ 48kHz)
+# PIPEWIRE_LATENCY: Specifies the buffer size for the ALSA plugin (512 samples @ 48kHz)
 echo "Starting Beatmania IIDX..."
 export DXVK_HUD=1
-export PIPEWIRE_LATENCY="1024/48000"
+export PIPEWIRE_LATENCY="512/48000"
 wine spice64.exe -url http://localhost:8083 -card0 E00401D700D2BFCB -iidx -w -iidxsounddevice dsound
 
 # Cleanup: Kill Asphyxia when the game exits
