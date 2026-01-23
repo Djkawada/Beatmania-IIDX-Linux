@@ -15,29 +15,29 @@ cd "$GAME_DIR"
 killall -9 asphyxia-core-x64.exe spice64.exe 2>/dev/null
 killall -9 speech-dispatcher 2>/dev/null # Fix #5: Remove accessibility interference
 
-# Fix #2: Adjust Pipewire Quantum for motherboard audio stability
-# Even with pure ALSA, setting the hardware rate/quantum helps.
+# 1. Pipewire Optimization (Hardware Level)
+# Force 44.1kHz and 2048 quantum (High stability for ALSA)
 if command -v pw-metadata >/dev/null 2>&1; then
-    echo "Setting Pipewire quantum to 1024..."
-    pw-metadata -n settings 0 clock.force-quantum 1024
+    echo "Configuring Audio Hardware (Pipewire)..."
     pw-metadata -n settings 0 clock.force-rate 44100
+    pw-metadata -n settings 0 clock.force-quantum 2048
 fi
 
-# Start Asphyxia server in the background
+# 2. Start Asphyxia (Network)
 echo "Starting Asphyxia Core..."
+# Fix for Node.js platform check on Wine
 export NODE_SKIP_PLATFORM_CHECK=1
 wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
 ASPHYXIA_PID=$!
 
-# Give it a moment to initialize
 sleep 5
 
-# Start the game
-# Using DirectSound over pure ALSA driver (Wine registry updated)
+# 3. Start Game
+# -iidxsounddevice dsound: Use DirectSound (maps to ALSA)
+# PIPEWIRE_LATENCY: Specifies the buffer size for the ALSA plugin (2048 samples @ 44.1kHz)
 echo "Starting Beatmania IIDX..."
 export DXVK_HUD=1
-# Adding a small latency buffer to smooth out remaining crackles
-export PULSE_LATENCY_MSEC=60
+export PIPEWIRE_LATENCY="2048/44100"
 wine spice64.exe -url http://localhost:8083 -card0 E00401D700D2BFCB -iidx -w -iidxsounddevice dsound
 
 # Cleanup: Kill Asphyxia when the game exits

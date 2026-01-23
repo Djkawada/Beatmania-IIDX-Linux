@@ -111,11 +111,11 @@ cd "$GAME_DIR"
 killall -9 asphyxia-core-x64.exe spice64.exe 2>/dev/null
 
 # 1. Pipewire Optimization (Hardware Level)
-# Force 44.1kHz and 1024 quantum for ALSA stability
+# Force 44.1kHz and 2048 quantum (High stability for ALSA)
 if command -v pw-metadata >/dev/null 2>&1; then
     echo "Configuring Audio Hardware (Pipewire)..."
     pw-metadata -n settings 0 clock.force-rate 44100
-    pw-metadata -n settings 0 clock.force-quantum 1024
+    pw-metadata -n settings 0 clock.force-quantum 2048
 fi
 
 # 2. Start Asphyxia (Network)
@@ -128,11 +128,11 @@ ASPHYXIA_PID=$!
 sleep 5
 
 # 3. Start Game
-# -iidxsounddevice dsound: Use DirectSound (which maps to ALSA via our Registry fix)
-# PULSE_LATENCY_MSEC=60: Safety buffer for ALSA/Pulse bridge
+# -iidxsounddevice dsound: Use DirectSound (maps to ALSA)
+# PIPEWIRE_LATENCY: Specifies the buffer size for the ALSA plugin (2048 samples @ 44.1kHz)
 echo "Starting Beatmania IIDX..."
 export DXVK_HUD=1
-export PULSE_LATENCY_MSEC=60
+export PIPEWIRE_LATENCY="2048/44100"
 wine spice64.exe -url http://localhost:8083 -card0 E00401D700D2BFCB -iidx -w -iidxsounddevice dsound
 
 # 4. Cleanup
