@@ -24,7 +24,7 @@ unset DXVK_HUD                # Disable HUD to reduce GPU overhead
 if command -v pw-metadata >/dev/null 2>&1; then
     echo "Configuring Audio Hardware (Pipewire)..."
     pw-metadata -n settings 0 clock.force-rate 48000
-    pw-metadata -n settings 0 clock.force-quantum 1024
+    pw-metadata -n settings 0 clock.force-quantum 256
 fi
 
 # Start Asphyxia (Background)
@@ -34,7 +34,7 @@ ASPHYXIA_PID=$!
 sleep 5
 
 # Using DirectSound over ALSA (maps via Registry)
-export PIPEWIRE_LATENCY="1024/48000"
+export PIPEWIRE_LATENCY="256/48000"
 RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 E00401D700D2BFCB -iidx -w -iidxsounddevice dsound"
 
 # Realtime Priority (chrt)
