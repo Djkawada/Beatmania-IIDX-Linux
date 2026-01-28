@@ -1,62 +1,60 @@
 #!/bin/bash
+set -e
+# Use HOME variable for portability
+GAME_DIR="$HOME/Games/Beatmania IIDX/Beatmania 2023090500"
 
-# Path to the game directory
-GAME_DIR="/home/pierre/Games/Beatmania IIDX/Beatmania 2023090500"
-
-# Check if directory exists
 if [ ! -d "$GAME_DIR" ]; then
-    echo "Error: Game directory not found at $GAME_DIR"
-    exit 1
+  echo "Error: Game directory not found: $GAME_DIR"
+  exit 1
 fi
-
 cd "$GAME_DIR"
 
-# Kill any existing instances first
-killall -9 asphyxia-core-x64.exe spice64.exe 2>/dev/null
-killall -9 speech-dispatcher 2>/dev/null # Fix #5: Remove accessibility interference
+# Graceful cleanup
+pkill -f asphyxia-core-x64.exe 2>/dev/null || true
+pkill -f spice64.exe 2>/dev/null || true
+pkill -f speech-dispatcher 2>/dev/null || true
+
+# Exports
+export NODE_SKIP_PLATFORM_CHECK=1
+export WINEESYNC=1            # Enable eventfd-based synchronization (lower latency)
+unset DXVK_HUD                # Disable HUD to reduce GPU overhead
 
 # 1. Pipewire Optimization (Hardware Level)
-# Use system sample rate (48kHz) to avoid resampling issues with 256-512 samples for low latency
+# Reverting to 48kHz ALSA logic (Hardware Native)
 if command -v pw-metadata >/dev/null 2>&1; then
     echo "Configuring Audio Hardware (Pipewire)..."
     pw-metadata -n settings 0 clock.force-rate 48000
-    pw-metadata -n settings 0 clock.force-quantum 256
+    pw-metadata -n settings 0 clock.force-quantum 1024
 fi
 
-# 2. Start Asphyxia (Network)
+# Start Asphyxia (Background)
 echo "Starting Asphyxia Core..."
-# Fix for Node.js platform check on Wine
-export NODE_SKIP_PLATFORM_CHECK=1
 wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
 ASPHYXIA_PID=$!
-
 sleep 5
 
-# 3. Start Game
-# -iidxsounddevice dsound: Use DirectSound (maps to ALSA)
-# PIPEWIRE_LATENCY: Specifies the buffer size for the ALSA plugin (256 samples @ 48kHz)
-echo "Starting Beatmania IIDX..."
-export DXVK_HUD=1
-export PIPEWIRE_LATENCY="256/48000"
-export WINE_ALSA_SAMPLE_RATE=48000
-export WINE_ALSA_PERIOD_SIZE=256
-wine spice64.exe -url http://localhost:8083 -card0 E00401D700D2BFCB -iidx -w -iidxsounddevice dsound
+# Using DirectSound over ALSA (maps via Registry)
+export PIPEWIRE_LATENCY="1024/48000"
+RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 E00401D700D2BFCB -iidx -w -iidxsounddevice dsound"
 
-# Cleanup: Kill Asphyxia when the game exits
-if command -v pw-metadata >/dev/null 2>&1; then
-    pw-metadata -n settings 0 clock.force-quantum 0
-    pw-metadata -n settings 0 clock.force-rate 0
+# Realtime Priority (chrt)
+# Requires user limits configuration, but harmless if it fails
+if command -v chrt >/dev/null 2>&1; then
+  echo "Attempting launch with Realtime Priority (FIFO 70)..."
+  # Try to run with high priority. If chrt fails (perm denied), fallback to normal run.
+  if ! chrt -f 70 sh -c "$RUN_CMD" &>/dev/null; then
+      echo "  -> RT priority failed (check limits.conf), falling back to normal priority."
+      eval "$RUN_CMD" &
+  else
+      eval "chrt -f 70 $RUN_CMD" &
+  fi
+else
+  eval "$RUN_CMD" &
 fi
-kill $ASPHYXIA_PID
-if command -v pw-metadata >/dev/null 2>&1; then
-    echo "Resetting Pipewire settings..."
-    pw-metadata -n settings 0 clock.force-quantum 0
-    pw-metadata -n settings 0 clock.force-rate 0
-fi
+WINE_PID=$!
 
-# Cleanup: Kill Asphyxia when the game exits
+echo "Game running with PID $WINE_PID"
+wait $WINE_PID || true
 
-
-# Cleanup: Kill Asphyxia when the game exits
-echo "Game exited. Stopping Asphyxia..."
-kill $ASPHYXIA_PID
+echo "Game exited. Cleaning up..."
+kill $ASPHYXIA_PID 2>/dev/null || true
