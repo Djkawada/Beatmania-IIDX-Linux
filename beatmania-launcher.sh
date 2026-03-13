@@ -34,13 +34,16 @@ unset DXVK_HUD
 export NODE_SKIP_PLATFORM_CHECK=1
 export WINEESYNC=1            # Enable eventfd-based synchronization
 export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
-# FORCE ALSA ONLY: Disables winepulse driver to prevent 8ch/mixing issues
-export WINEDLLOVERRIDES="winepulse.drv=n"
+# FORCE STEREO & DIRECT SINK: Ignores HDMI and forces 2 channels at the Pulse layer
+export PULSE_SINK="alsa_output.pci-0000_0c_00.4.analog-stereo"
+export PULSE_CHANNELS=2
+export WINE_PULSE_CHANNELS=2
+export PULSE_LATENCY_MSEC=60
 unset DXVK_HUD
 
 # 1. Pipewire Optimization (Hardware Level)
 if command -v pw-metadata >/dev/null 2>&1; then
-    echo "Configuring Audio Hardware for Hardcore ALSA (44.1kHz)..."
+    echo "Locking Pipewire to 44.1kHz Stereo..."
     pw-metadata -n settings 0 clock.force-rate 44100
     pw-metadata -n settings 0 clock.force-quantum 512
 fi
@@ -51,11 +54,10 @@ wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
 ASPHYXIA_PID=$!
 sleep 5
 
-# Using Linux-optimized Spice binaries with DirectSound over RAW ALSA
-# This mode bypasses the entire PulseAudio stack for absolute control.
-echo "Using Linux-optimized Spice binaries (Hardcore ALSA Mode)..."
-export PIPEWIRE_LATENCY="512/44100"
-RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice dsound"
+# Using Linux-optimized Spice binaries with WASAPI (Shared)
+# Locked to 2 channels via PULSE_CHANNELS exports.
+echo "Using Linux-optimized Spice binaries (Pulse Stereo Force)..."
+RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice wasapi"
 
 # Realtime Priority (chrt)
 # We test permission with a simple 'true' command instead of launching the whole game.
