@@ -31,9 +31,9 @@ export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
 unset DXVK_HUD
 
 # 1. Pipewire Optimization (Hardware Level)
-# ASIO via FlexASIO/Pulse works best when hardware matches game native rate
+# WASAPI Exclusive REQUIREs the hardware to match the game rate (44.1kHz)
 if command -v pw-metadata >/dev/null 2>&1; then
-    echo "Configuring Audio Hardware (Pipewire 44.1kHz)..."
+    echo "Configuring Audio Hardware for Exclusive Mode (44.1kHz)..."
     pw-metadata -n settings 0 clock.force-rate 44100
     pw-metadata -n settings 0 clock.force-quantum 512
 fi
@@ -44,10 +44,10 @@ wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
 ASPHYXIA_PID=$!
 sleep 5
 
-# Using Linux-optimized Spice binaries with ASIO (via FlexASIO)
-# ASIO forces a strict channel count (configured to 2 in FlexASIO.toml)
-echo "Using Linux-optimized Spice binaries (ASIO Mode)..."
-RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice asio"
+# Using Linux-optimized Spice binaries with WASAPI Exclusive Mode
+# This bypasses the Pulse/Pipewire mixer for zero latency and clear sound.
+echo "Using Linux-optimized Spice binaries (WASAPI Exclusive Mode)..."
+RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice wasapi -wasapiexclusive"
 
 # Realtime Priority (chrt)
 # We test permission with a simple 'true' command instead of launching the whole game.
