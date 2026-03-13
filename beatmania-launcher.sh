@@ -30,10 +30,17 @@ export WINEESYNC=1            # Enable eventfd-based synchronization
 export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
 unset DXVK_HUD
 
+# Exports
+export NODE_SKIP_PLATFORM_CHECK=1
+export WINEESYNC=1            # Enable eventfd-based synchronization
+export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
+# FORCE ALSA ONLY: Disables winepulse driver to prevent 8ch/mixing issues
+export WINEDLLOVERRIDES="winepulse.drv=n"
+unset DXVK_HUD
+
 # 1. Pipewire Optimization (Hardware Level)
-# In ALSA Direct mode, Pipewire must be forced to 44.1kHz to let Wine take over properly
 if command -v pw-metadata >/dev/null 2>&1; then
-    echo "Configuring Audio Hardware for ALSA Direct (44.1kHz)..."
+    echo "Configuring Audio Hardware for Hardcore ALSA (44.1kHz)..."
     pw-metadata -n settings 0 clock.force-rate 44100
     pw-metadata -n settings 0 clock.force-quantum 512
 fi
@@ -44,9 +51,9 @@ wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
 ASPHYXIA_PID=$!
 sleep 5
 
-# Using Linux-optimized Spice binaries with DirectSound over ALSA
-# This mode bypasses PulseAudio for a direct 'Bit-Perfect' connection.
-echo "Using Linux-optimized Spice binaries (ALSA Direct Mode)..."
+# Using Linux-optimized Spice binaries with DirectSound over RAW ALSA
+# This mode bypasses the entire PulseAudio stack for absolute control.
+echo "Using Linux-optimized Spice binaries (Hardcore ALSA Mode)..."
 export PIPEWIRE_LATENCY="512/44100"
 RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice dsound"
 
