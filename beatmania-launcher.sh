@@ -28,16 +28,14 @@ pkill -f speech-dispatcher 2>/dev/null || true
 export NODE_SKIP_PLATFORM_CHECK=1
 export WINEESYNC=1            # Enable eventfd-based synchronization
 export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
-export WINE_PULSE_CHANNELS=2  # FORCE STEREO (Fixes 8-channel mud/noise)
-export PULSE_LATENCY_MSEC=60  # Stable buffer
 unset DXVK_HUD
 
 # 1. Pipewire Optimization (Hardware Level)
-# Align hardware with game (44.1k) to eliminate resampling distortion
+# ASIO via FlexASIO/Pulse works best when hardware matches game native rate
 if command -v pw-metadata >/dev/null 2>&1; then
-    echo "Configuring Audio Hardware (Pipewire 44.1kHz Stereo)..."
+    echo "Configuring Audio Hardware (Pipewire 44.1kHz)..."
     pw-metadata -n settings 0 clock.force-rate 44100
-    pw-metadata -n settings 0 clock.force-quantum 1024
+    pw-metadata -n settings 0 clock.force-quantum 512
 fi
 
 # Start Asphyxia (Background)
@@ -46,10 +44,10 @@ wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
 ASPHYXIA_PID=$!
 sleep 5
 
-# Using Linux-optimized Spice binaries with WASAPI (Shared Mode)
-# We use WASAPI because WINE_PULSE_CHANNELS fixes the 8ch issue.
-echo "Using Linux-optimized Spice binaries (Stereo Mode)..."
-RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice wasapi"
+# Using Linux-optimized Spice binaries with ASIO (via FlexASIO)
+# ASIO forces a strict channel count (configured to 2 in FlexASIO.toml)
+echo "Using Linux-optimized Spice binaries (ASIO Mode)..."
+RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice asio"
 
 # Realtime Priority (chrt)
 # We test permission with a simple 'true' command instead of launching the whole game.
