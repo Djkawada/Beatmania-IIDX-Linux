@@ -26,9 +26,19 @@ pkill -f speech-dispatcher 2>/dev/null || true
 
 # Exports
 export NODE_SKIP_PLATFORM_CHECK=1
-export WINEESYNC=1            # Enable eventfd-based synchronization (lower latency)
-export PULSE_LATENCY_MSEC=60  # Optimal buffer for Linux-optimized Spice binaries
-unset DXVK_HUD                # Disable HUD to reduce GPU overhead
+export WINEESYNC=1            # Enable eventfd-based synchronization
+export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
+export WINE_PULSE_CHANNELS=2  # FORCE STEREO (Fixes 8-channel mud/noise)
+export PULSE_LATENCY_MSEC=60  # Stable buffer
+unset DXVK_HUD
+
+# 1. Pipewire Optimization (Hardware Level)
+# Align hardware with game (44.1k) to eliminate resampling distortion
+if command -v pw-metadata >/dev/null 2>&1; then
+    echo "Configuring Audio Hardware (Pipewire 44.1kHz Stereo)..."
+    pw-metadata -n settings 0 clock.force-rate 44100
+    pw-metadata -n settings 0 clock.force-quantum 1024
+fi
 
 # Start Asphyxia (Background)
 echo "Starting Asphyxia Core..."
@@ -36,10 +46,10 @@ wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
 ASPHYXIA_PID=$!
 sleep 5
 
-# Using Linux-optimized Spice binaries with DirectSound
-# DirectSound is more reliable for stereo mapping on Linux than WASAPI (avoids 8ch white noise).
-echo "Using Linux-optimized Spice binaries (DirectSound Mode)..."
-RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice dsound"
+# Using Linux-optimized Spice binaries with WASAPI (Shared Mode)
+# We use WASAPI because WINE_PULSE_CHANNELS fixes the 8ch issue.
+echo "Using Linux-optimized Spice binaries (Stereo Mode)..."
+RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice wasapi"
 
 # Realtime Priority (chrt)
 # We test permission with a simple 'true' command instead of launching the whole game.
