@@ -35,23 +35,14 @@ export NODE_SKIP_PLATFORM_CHECK=1
 export WINEESYNC=1            # Enable eventfd-based synchronization
 export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
 export DXVK_HUD=0
-export PULSE_LATENCY_MSEC=60
+# WineASIO Specifics
+export WINEASIO_AUTO_CONNECT=1 # Automatically connect ASIO ports to Pipewire
+export WINEASIO_CONNECT_TO_ALL=1
 
-# 1. Pipewire Virtual Stereo Bridge
-# This creates a 'Fake' sound card that only supports 2 channels.
-# The game will be forced into Stereo mode.
-echo "Creating Virtual Stereo Bridge..."
-HARDWARE_SINK="alsa_output.pci-0000_0c_00.4.analog-stereo"
-
-# Load Null Sink (The 2-channel target for the game)
-SINK_ID=$(pactl load-module module-null-sink sink_name=IIDX-Stereo channels=2 rate=44100 sink_properties=device.description=IIDX-Stereo)
-# Load Loopback (Bridges the Null Sink monitor to your Motherboard Audio)
-LOOP_ID=$(pactl load-module module-loopback source=IIDX-Stereo.monitor sink=$HARDWARE_SINK latency_msec=1)
-
-export PULSE_SINK="IIDX-Stereo"
-
+# 1. Pipewire Optimization (Hardware Level)
+# WineASIO works best when Pipewire matches the game rate exactly
 if command -v pw-metadata >/dev/null 2>&1; then
-    echo "Locking Hardware to 44.1kHz..."
+    echo "Locking Hardware to 44.1kHz for WineASIO..."
     pw-metadata -n settings 0 clock.force-rate 44100
     pw-metadata -n settings 0 clock.force-quantum 512
 fi
@@ -62,10 +53,10 @@ wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
 ASPHYXIA_PID=$!
 sleep 5
 
-# Using Linux-optimized Spice binaries with WASAPI (Shared)
-# The Virtual Bridge ensures WASAPI only sees 2 channels.
-echo "Using Linux-optimized Spice binaries (Virtual Stereo Bridge Mode)..."
-RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice wasapi"
+# Using Linux-optimized Spice binaries with WineASIO
+# This bypasses all Wine audio drivers and talks directly to Pipewire-JACK.
+echo "Using Linux-optimized Spice binaries (WineASIO Mode)..."
+RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice asio"
 
 # Realtime Priority (chrt)
 if command -v chrt >/dev/null 2>&1 && chrt -f 1 true 2>/dev/null; then
@@ -80,8 +71,6 @@ echo "Game running with PID $WINE_PID"
 wait $WINE_PID
 
 echo "Game exited. Cleaning up..."
-pactl unload-module $LOOP_ID
-pactl unload-module $SINK_ID
 kill $ASPHYXIA_PID 2>/dev/null || true
 pkill -f spice64.exe 2>/dev/null || true
 exit 0
