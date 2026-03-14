@@ -9,7 +9,6 @@ if [ ! -d "$GAME_DIR" ]; then
 fi
 
 # Load Card ID from file (Keep this file private!)
-# Moving to script directory first to find card.txt
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [ -f "$SCRIPT_DIR/card.txt" ]; then
     CARD_ID=$(cat "$SCRIPT_DIR/card.txt")
@@ -28,19 +27,14 @@ pkill -f speech-dispatcher 2>/dev/null || true
 export NODE_SKIP_PLATFORM_CHECK=1
 export WINEESYNC=1            # Enable eventfd-based synchronization
 export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
-unset DXVK_HUD
-
-# Exports
-export NODE_SKIP_PLATFORM_CHECK=1
-export WINEESYNC=1            # Enable eventfd-based synchronization
-export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
 export DXVK_HUD=0
-# WineASIO Specifics
-export WINEASIO_AUTO_CONNECT=1 # Automatically connect ASIO ports to Pipewire
+
+# WineASIO Specifics: Bridges ASIO directly to Pipewire-JACK
+export WINEASIO_AUTO_CONNECT=1
 export WINEASIO_CONNECT_TO_ALL=1
 
 # 1. Pipewire Optimization (Hardware Level)
-# WineASIO works best when Pipewire matches the game rate exactly
+# WineASIO works best when hardware rate matches the game rate exactly (44.1kHz)
 if command -v pw-metadata >/dev/null 2>&1; then
     echo "Locking Hardware to 44.1kHz for WineASIO..."
     pw-metadata -n settings 0 clock.force-rate 44100
@@ -55,26 +49,10 @@ sleep 5
 
 # Using Linux-optimized Spice binaries with WineASIO
 # This bypasses all Wine audio drivers and talks directly to Pipewire-JACK.
-echo "Using Linux-optimized Spice binaries (WineASIO Mode)..."
+echo "Using Linux-optimized Spice binaries (WineASIO Grail Mode)..."
 RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice asio"
 
 # Realtime Priority (chrt)
-if command -v chrt >/dev/null 2>&1 && chrt -f 1 true 2>/dev/null; then
-    echo "Launching with Realtime Priority (FIFO 70)..."
-    chrt -f 70 $RUN_CMD &
-else
-    $RUN_CMD &
-fi
-WINE_PID=$!
-
-echo "Game running with PID $WINE_PID"
-wait $WINE_PID
-
-echo "Game exited. Cleaning up..."
-kill $ASPHYXIA_PID 2>/dev/null || true
-pkill -f spice64.exe 2>/dev/null || true
-exit 0
-# We test permission with a simple 'true' command instead of launching the whole game.
 if command -v chrt >/dev/null 2>&1 && chrt -f 1 true 2>/dev/null; then
     echo "Launching with Realtime Priority (FIFO 70)..."
     chrt -f 70 $RUN_CMD &
@@ -85,7 +63,7 @@ fi
 WINE_PID=$!
 
 echo "Game running with PID $WINE_PID"
-wait $WINE_PID || true
+wait $WINE_PID
 
 echo "Game exited. Cleaning up..."
 kill $ASPHYXIA_PID 2>/dev/null || true
