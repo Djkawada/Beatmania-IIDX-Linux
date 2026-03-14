@@ -48,9 +48,9 @@ ASPHYXIA_PID=$!
 sleep 5
 
 # Using Linux-optimized Spice binaries with WineASIO
-# This bypasses all Wine audio drivers and talks directly to Pipewire-JACK.
-echo "Using Linux-optimized Spice binaries (WineASIO Grail Mode)..."
-RUN_CMD="wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice asio"
+# Prepending pw-jack to bridge the ASIO calls to Pipewire-JACK.
+echo "Using Linux-optimized Spice binaries (WineASIO + pw-jack)..."
+RUN_CMD="pw-jack wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice asio"
 
 # Realtime Priority (chrt)
 if command -v chrt >/dev/null 2>&1 && chrt -f 1 true 2>/dev/null; then
