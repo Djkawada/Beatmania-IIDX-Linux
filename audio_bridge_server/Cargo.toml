@@ -1,0 +1,9 @@
+[package]
+name = "audio_bridge_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cpal = "0.15"
+ringbuf = "0.4"
+alsa = "0.9"

@@ -1,71 +1,40 @@
 #!/bin/bash
-set -e
-# Use HOME variable for portability
 GAME_DIR="$HOME/Games/Beatmania IIDX/Beatmania 2023090500"
-
-if [ ! -d "$GAME_DIR" ]; then
-  echo "Error: Game directory not found: $GAME_DIR"
-  exit 1
-fi
-
-# Load Card ID from file (Keep this file private!)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-if [ -f "$SCRIPT_DIR/card.txt" ]; then
-    CARD_ID=$(cat "$SCRIPT_DIR/card.txt")
-else
-    CARD_ID="00000000000000000000"
-fi
+CARD_ID=$(cat "$SCRIPT_DIR/card.txt" 2>/dev/null || echo "00000000000000000000")
 
+# 1. Cleanup
+pkill -9 -f asphyxia-core-x64.exe 2>/dev/null || true
+pkill -9 -f spice64.exe 2>/dev/null || true
+pkill -9 -f audio_bridge_server 2>/dev/null || true
+
+# 2. Start Native Rust Server
+echo "[+] Starting Native Audio Server..."
+"$SCRIPT_DIR/audio_bridge_server/target/release/audio_bridge_server" &
+SERVER_PID=$!
+
+# 3. Start Asphyxia
+echo "[+] Starting Asphyxia Core..."
 cd "$GAME_DIR"
-
-# Graceful cleanup
-pkill -f asphyxia-core-x64.exe 2>/dev/null || true
-pkill -f spice64.exe 2>/dev/null || true
-pkill -f speech-dispatcher 2>/dev/null || true
-
-# Exports
-export NODE_SKIP_PLATFORM_CHECK=1
-export WINEESYNC=1            # Enable eventfd-based synchronization
-export WINEPULSE_FAST_POLLING=1 # Critical for rhythm games on Wine
-export DXVK_HUD=0
-
-# WineASIO Specifics: Bridges ASIO directly to Pipewire-JACK
-export WINEASIO_AUTO_CONNECT=1
-export WINEASIO_CONNECT_TO_ALL=1
-
-# 1. Pipewire Optimization (Hardware Level)
-# WineASIO works best when hardware rate matches the game rate exactly (44.1kHz)
-if command -v pw-metadata >/dev/null 2>&1; then
-    echo "Locking Hardware to 44.1kHz for WineASIO..."
-    pw-metadata -n settings 0 clock.force-rate 44100
-    pw-metadata -n settings 0 clock.force-quantum 512
-fi
-
-# Start Asphyxia (Background)
-echo "Starting Asphyxia Core..."
-wine asphyxia-core-x64.exe > asphyxia_debug.log 2>&1 &
+wine asphyxia-core-x64.exe > /dev/null 2>&1 &
 ASPHYXIA_PID=$!
 sleep 5
 
-# Using Linux-optimized Spice binaries with WineASIO
-# Prepending pw-jack to bridge the ASIO calls to Pipewire-JACK.
-echo "Using Linux-optimized Spice binaries (WineASIO + pw-jack)..."
-RUN_CMD="pw-jack wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice asio"
+# 4. Copy Plugin DLL
+cp "$SCRIPT_DIR/asio_bridge/target/x86_64-pc-windows-gnu/release/asio_bridge.dll" "$GAME_DIR/modules/audio_bridge.dll"
 
-# Realtime Priority (chrt)
-if command -v chrt >/dev/null 2>&1 && chrt -f 1 true 2>/dev/null; then
-    echo "Launching with Realtime Priority (FIFO 70)..."
-    chrt -f 70 $RUN_CMD &
-else
-    echo "Launching with Normal Priority (chrt not available or permission denied)..."
-    $RUN_CMD &
-fi
-WINE_PID=$!
+# 5. Launch Game
+# We use standard arguments and avoid -plugin if it causes issues.
+# Instead, we will name the DLL 'dsound.dll' to force loading as a proxy.
+cp "$GAME_DIR/modules/audio_bridge.dll" "$GAME_DIR/dsound.dll"
 
-echo "Game running with PID $WINE_PID"
-wait $WINE_PID
+echo "[+] Launching Game with Rust Audio Proxy..."
+# Force Wine to use our local dsound.dll (the Rust one)
+export WINEDLLOVERRIDES="dsound=n,b"
 
-echo "Game exited. Cleaning up..."
-kill $ASPHYXIA_PID 2>/dev/null || true
-pkill -f spice64.exe 2>/dev/null || true
-exit 0
+wine spice64.exe -url http://localhost:8083 -card0 $CARD_ID -iidx -w -iidxsounddevice dsound
+
+# 6. Cleanup
+kill $ASPHYXIA_PID $SERVER_PID 2>/dev/null || true
+rm -f "$GAME_DIR/dsound.dll"
+echo "Game exited."
