@@ -6,6 +6,7 @@ CARD_ID=$(cat "$SCRIPT_DIR/card.txt" 2>/dev/null || echo "00000000000000000000")
 # 1. Cleanup
 pkill -9 -f asphyxia-core-x64.exe 2>/dev/null || true
 pkill -9 -f spice64.exe 2>/dev/null || true
+rm -f "$GAME_DIR/dsound.dll" "$GAME_DIR/modules/audio_bridge.dll"
 pkill -9 -f audio_bridge_server 2>/dev/null || true
 
 # 2. Start Native Rust Server
