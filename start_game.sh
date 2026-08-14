@@ -44,5 +44,6 @@ echo "[+] Launching Beatmania IIDX with GE-Proton10-34..."
     -nolauncher \
     -norelaunch \
     -noadmin \
+    -icmphook \
     -iidxsounddevice wasapi \
     $SOUND_FLAG

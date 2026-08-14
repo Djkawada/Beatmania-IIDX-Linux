@@ -115,7 +115,7 @@ fn handle_client(mut client_stream: TcpStream, target_port: u16, listen_port: u1
         if i == 0 {
             new_request_headers.push(line.to_string());
         } else if line_lower.starts_with("host:") {
-            new_request_headers.push(format!("Host: 127.0.0.1:{}", target_port));
+            new_request_headers.push(format!("Host: 127.0.0.1:{}", listen_port));
         } else if line_lower.starts_with("x-compress:") {
             new_request_headers.push("X-Compress: none".to_string());
         } else if line_lower.starts_with("accept-encoding:") {
@@ -184,15 +184,19 @@ fn handle_client(mut client_stream: TcpStream, target_port: u16, listen_port: u1
     let listen_url = format!("http://127.0.0.1:{}", listen_port).into_bytes();
 
     replace_subslice(&mut body_vec, &target_url1, &listen_url_slash);
-    replace_subslice(&mut body_vec, &target_url1_n, &listen_url);
+    replace_subslice(&mut body_vec, &target_url1_n, &listen_url_slash);
     replace_subslice(&mut body_vec, &target_url2, &listen_url_slash);
-    replace_subslice(&mut body_vec, &target_url2_n, &listen_url);
+    replace_subslice(&mut body_vec, &target_url2_n, &listen_url_slash);
     replace_subslice(&mut body_vec, b"http://services.konami.net/", &listen_url_slash);
-    replace_subslice(&mut body_vec, b"http://services.konami.net", &listen_url);
+    replace_subslice(&mut body_vec, b"http://services.konami.net", &listen_url_slash);
     replace_subslice(&mut body_vec, b"http://eagate.573.jp/", &listen_url_slash);
-    replace_subslice(&mut body_vec, b"http://eagate.573.jp", &listen_url);
+    replace_subslice(&mut body_vec, b"http://eagate.573.jp", &listen_url_slash);
     replace_subslice(&mut body_vec, b"http://ea.573.jp/", &listen_url_slash);
     replace_subslice(&mut body_vec, b"http://eapass.573.jp/", &listen_url_slash);
+
+    // Clean up any double trailing slashes
+    let double_slash = format!("http://127.0.0.1:{}//", listen_port).into_bytes();
+    replace_subslice(&mut body_vec, &double_slash, &listen_url_slash);
 
     // 2. Rewrite Country Code & Region for official Japanese LDJ cabinet validation
     replace_subslice(&mut body_vec, b"<country __type=\"str\">AX</country>", b"<country __type=\"str\">JP</country>");
