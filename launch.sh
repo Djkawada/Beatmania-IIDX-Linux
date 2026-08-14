@@ -139,7 +139,6 @@ cd "$GAME_DIR"
 echo -e "${GREEN}[+] Launching Beatmania IIDX ($WINE_BIN)...${NC}"
 "$WINE_BIN" "$SPICE_EXE" \
     -cmdoverride \
-    -ea \
     -url "$NETWORK_URL" \
     $WINDOW_FLAG \
     -iidx \

@@ -38,7 +38,6 @@ cd "$GAME_DIR"
 echo "[+] Launching Beatmania IIDX with GE-Proton10-34..."
 "$WINE_BIN" "$SPICE_EXE" \
     -cmdoverride \
-    -ea \
     -url "$NETWORK_URL" \
     $WINDOW_FLAG \
     -iidx \
