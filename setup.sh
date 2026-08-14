@@ -69,8 +69,8 @@ cargo build --release
 cd "$SCRIPT_DIR"
 echo -e "${GREEN}[+] iidx-sound-bridge compiled in release mode.${NC}"
 
-# 4. Configuration Template Check
-echo -e "\n${YELLOW}[4/4] Checking local configuration...${NC}"
+# 4. Configuration & Desktop Shortcut
+echo -e "\n${YELLOW}[4/4] Setting up configuration & desktop shortcut...${NC}"
 if [ ! -f "$SCRIPT_DIR/config.json" ]; then
     echo -e "${YELLOW}[*] Creating config.json from config.example.json...${NC}"
     cp "$SCRIPT_DIR/config.example.json" "$SCRIPT_DIR/config.json"
@@ -78,6 +78,30 @@ if [ ! -f "$SCRIPT_DIR/config.json" ]; then
 else
     echo -e "${GREEN}[+] Existing config.json detected.${NC}"
 fi
+
+# Install Desktop Shortcut & Icon
+mkdir -p "$HOME/.local/share/icons" "$HOME/.local/share/applications"
+if [ -f "$SCRIPT_DIR/assets/icon.jpg" ]; then
+    cp "$SCRIPT_DIR/assets/icon.jpg" "$HOME/.local/share/icons/beatmania-iidx.jpg"
+fi
+cat <<EOF > "$HOME/.local/share/applications/beatmania-iidx.desktop"
+[Desktop Entry]
+Name=Beatmania IIDX 30 RESIDENT
+GenericName=Arcade Rhythm Game
+Comment=Beatmania IIDX 30 RESIDENT (Linux Arcade Runner with PipeWire 48kHz Audio & e-Amusement)
+Exec=$SCRIPT_DIR/launch.sh
+Path=$SCRIPT_DIR
+Icon=$HOME/.local/share/icons/beatmania-iidx.jpg
+Terminal=false
+Type=Application
+Categories=Game;ArcadeGame;AudioVideo;
+Keywords=beatmania;iidx;bemani;konami;resident;arcade;rhythm;
+StartupNotify=true
+StartupWMClass=spice64.exe
+EOF
+chmod +x "$HOME/.local/share/applications/beatmania-iidx.desktop"
+update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+echo -e "${GREEN}[+] Desktop shortcut installed to application menu.${NC}"
 
 echo -e "\n${CYAN}================================================================${NC}"
 echo -e "${GREEN}  SUCCESS: Your Beatmania IIDX Linux environment is ready!       ${NC}"

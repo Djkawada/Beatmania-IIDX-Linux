@@ -35,10 +35,14 @@ if [ -z "$WINE_BIN" ] || [ "$WINE_BIN" = "null" ] || [ ! -f "$WINE_BIN" ]; then
     WINE_BIN="wine"
 fi
 
-# Environment configuration for DirectX 9 (DXVK) and PipeWire audio
+# Environment configuration for DirectX 9 (DXVK), PipeWire audio & low-jitter threading
 export WINEPREFIX
 export PIPEWIRE_LATENCY="$PW_LATENCY"
 export PIPEWIRE_RATE="1/$SAMPLE_RATE"
+export WINEFSYNC=1
+export WINEESYNC=1
+export WINE_RT_PRIO=1
+export STAGING_AUDIO_DURATION=10000
 export WINEDLLOVERRIDES="d3d9=n;mmdevapi=n,b;dsound=n,b;mfplat=b;mf=b;quartz=b;devenum=b;wmadmod=b;wmvdecod=b"
 export WINEDEBUG="-all"
 export __compat_layer=RunAsInvoker
