@@ -1,20 +1,9 @@
-# Ignore game data and binaries
-Games/
-*.exe
-*.dll
+target/
+**/target/
 *.log
-*.dmp
-*.db
+*.bak
+scratch/
 .wine/
-node_modules/
-trial_run*.log
-
-# Sensitive Data
-card.txt
-
-# Keep the scripts and configs we worked on
-!beatmania-launcher.sh
-!install_iidx_linux.sh
-!FlexASIO-Installer.exe
-!FlexASIO.toml
-!README.md
+archive/
+archive_*/
+config.json
