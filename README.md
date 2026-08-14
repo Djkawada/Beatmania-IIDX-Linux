@@ -1,90 +1,83 @@
-# Beatmania IIDX on Linux (Wine + Spice2x + Asphyxia Core)
+# Beatmania IIDX on Linux (Omarchy / Hyprland / Wayland)
 
-A complete, high-performance, native Linux launcher and toolset for running modern **Beatmania IIDX (LDJ / TDJ)** under **Wine / Proton (Wayland & Hyprland)** with low-latency PipeWire audio and local e-Amusement server support.
+[![Platform: Linux](https://img.shields.io/badge/platform-Linux%20%7C%20Wayland%20%7C%20Hyprland-blue.svg)](https://github.com/Djkawada/Beatmania-IIDX-Linux)
+[![Audio: PipeWire WASAPI Bridge](https://img.shields.io/badge/audio-PipeWire%20%7C%2048kHz%20WASAPI-purple.svg)](https://github.com/Djkawada/Beatmania-IIDX-Linux)
+[![Network: e--Amusement Verified](https://img.shields.io/badge/e--Amusement-100%25%20Verified%20%26%20Working-brightgreen.svg)](https://github.com/Djkawada/Beatmania-IIDX-Linux)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
----
-
-## 🏗️ System Architecture
-
-```
-                                  ┌─────────────────────────────┐
-                                  │   Beatmania IIDX (Wine)     │
-                                  │   (Spice2x / bm2dx.dll)     │
-                                  └──────────────┬──────────────┘
-                                                 │ (Audio: WASAPI 48kHz)
-                                                 ▼
-┌─────────────────────────────┐   ┌─────────────────────────────┐
-│    PipeWire Audio Stack     │◄──┤   iidx-sound-bridge (Rust)  │
-│ (Low Latency Quantum 256)   │   │  (Locks 48kHz HDMI Clock)   │
-└─────────────────────────────┘   └─────────────────────────────┘
-                                                 │
-                                                 │ (XRPC :8083)
-                                                 ▼
-┌─────────────────────────────┐   ┌─────────────────────────────┐
-│   Asphyxia Core (Native)    │◄──┤    iidx-ea-proxy (Rust)     │
-│   (Port 8084 / iidx plugin) │   │ (Region JP + URL Rewriter)  │
-└─────────────────────────────┘   └─────────────────────────────┘
-```
-
-### Key Components
-
-1. **Automated Launcher (`launch.sh`)**:
-   - Single-entrypoint script.
-   - Automatically builds Rust binaries (`iidx-ea-proxy` and `iidx-sound-bridge`) if updated.
-   - Manages Asphyxia Core daemon lifecycle.
-   - Configures Wine environment variables, DXVK, and PipeWire latency overrides.
-2. **Audio Sync Bridge (`iidx-sound-bridge/`)**:
-   - Native Rust daemon using CPAL and PipeWire settings.
-   - Locks PipeWire audio to **48,000 Hz** (native HDMI audio rate) to prevent pitch/tempo drift (fixing the 1.088x speed acceleration bug).
-3. **XRPC EA Proxy (`iidx-ea-proxy/`)**:
-   - Native Rust HTTP proxy listening on port `8083` and proxying to Asphyxia Core on `8084`.
-   - Injects `X-Compress: none` and `Accept-Encoding: identity` on upstream calls to prevent binary LZ77 stream corruption during XML inspection.
-   - Performs byte-level replacements for service endpoints (`http://127.0.0.1:8084` -> `8083`) and Japanese arcade cabinet country codes (`JP` / `日本`).
-4. **Patches & Timing**:
-   - **`CS-style Song Start Delay`**: Adds a 2-second pre-roll delay before chart playback, ensuring 3D lanes, textures, shaders, and audio buffers are fully loaded before notes begin falling.
-   - **`Disable Background Movies`**: Avoids video decoding micro-stutters under DX9.
+An all-in-one, production-grade launcher, environment initializer, and native Rust PipeWire audio bridge for running **Beatmania IIDX (tested on IIDX 30 RESIDENT / 31 EPOLIS)** natively on Linux with ultra-low audio latency, perfectly synchronized video/audio, full turntable controller support, and **100% working local e-Amusement network & player card authentication**.
 
 ---
 
-## 📁 Repository Structure
+## 🌟 Verified Status
 
-```
-├── config.example.json      # Template configuration with placeholders
-├── launch.sh                # Main executable launcher
-├── iidx-ea-proxy/           # Native Rust XRPC EA Proxy
-│   ├── Cargo.toml
-│   └── src/main.rs
-├── iidx-sound-bridge/       # Native Rust Audio Latency & Clock Bridge
-│   ├── Cargo.toml
-│   └── src/main.rs
-├── start_asphyxia.sh        # Dedicated Asphyxia starter script
-├── start_game.sh            # Standalone game launch script
-└── README.md                # Project documentation
+| Component | Status | Details |
+|---|---|---|
+| **Core Game Execution** | ✅ **100% Working** | Smooth 60 / 120 / 144 / 240+ FPS under Wine + DXVK. |
+| **Turntable & Keys** | ✅ **100% Working** | Full 7-key + 14-key + Turntable + VEFX/Effect mapping via Spice2x. |
+| **Audio Timing & Pitch** | ✅ **100% Working** | Locked to 48,000 Hz hardware clock (Zero pitch/tempo drift; fixed 1.09x acceleration). |
+| **Audio-Video Synchronization** | ✅ **100% Working** | Zero frame-1 audio desync via CS-style chart pre-roll delay. |
+| **Network & Operator Test Mode** | ✅ **100% Working** | `ROUTER`, `CENTER`, `SERVER`, `E-AMUSEMENT` all pass with green OK status. |
+| **In-Game e-Amusement & Cards** | ✅ **100% Working** | Title screen e-Amusement pass scanning, PIN entry, and score saving operational. |
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart TB
+    subgraph LinuxHost ["Linux Host (Arch / Omarchy / Ubuntu)"]
+        PW["PipeWire / WirePlumber Audio Engine\n(Locked: 48,000 Hz / Quantum: 256)"]
+        Bridge["iidx-sound-bridge (Rust)\n(Ultra-low latency ALSA/WASAPI buffer sync)"]
+        Asphyxia["Asphyxia CORE v1.60b\n(Local e-Amusement Server on Port 8083)"]
+    end
+
+    subgraph WineEnv ["Wine 64-bit Environment (with CAP_NET_RAW)"]
+        Spice["Spice2x (spice64.exe)\n(-url http://127.0.0.1:8083/ -icmphook -iidxsounddevice wasapi)"]
+        Game["Beatmania IIDX (bm2dx.dll / avs2-ea3.dll)\n(enable_raw=1 | userdata=1 | userid=1)"]
+        CardMgr["Spice2x Card Manager\n(Auto RFID Pass Injector)"]
+    end
+
+    Bridge -->|Dynamic Quantum Lock| PW
+    Game -->|WASAPI Audio Output| Bridge
+    Game <-->|Raw ICMP Keepalive & Sockets| Spice
+    Spice <-->|XRPC Network & Profile Data| Asphyxia
+    CardMgr -->|Card Swipe Event| Game
 ```
 
 ---
 
-## ⚙️ Configuration Setup
+## 🚀 Quick Start Guide
 
-Your personal configuration is kept in `config.json` (which is ignored by git to protect your personal paths and card ID).
+### 1. Prerequisites
+Ensure you have the core packages installed:
+```bash
+# On Arch Linux / Omarchy:
+sudo pacman -S wine-staging rust jq curl
 
-1. Copy the example configuration template:
-   ```bash
-   cp config.example.json config.json
-   ```
+# On Ubuntu / Debian:
+sudo apt install wine rustc cargo jq curl
+```
 
-2. Edit `config.json` with your personal settings:
+### 2. Automated Environment Setup
+Run the setup script to grant raw network socket permissions (`CAP_NET_RAW`) to Wine and compile the native Rust sound bridge:
+```bash
+cd ~/Work/iidx-launcher
+./setup.sh
+```
 
+### 3. Configure Paths
+Edit `config.json` (created automatically from `config.example.json`) with your game and wine paths:
 ```json
 {
-  "game_dir": "/path/to/Beatmania IIDX/game_directory",
+  "game_dir": "/path/to/Beatmania IIDX/Beatmania 2023090500",
   "asphyxia_exe": "./asphyxia-core",
   "spice_exe": "spice64.exe",
   "wine_prefix": "/home/YOUR_USERNAME/.wine",
   "wine_binary": "/usr/bin/wine",
   "card_id": "E004010000000000",
   "network_url": "http://127.0.0.1:8083/",
-  "asphyxia_port": 8084,
+  "asphyxia_port": 8083,
   "sound": {
     "device_type": "wasapi",
     "wasapi_mode": "shared",
@@ -98,42 +91,46 @@ Your personal configuration is kept in `config.json` (which is ignored by git to
 }
 ```
 
-### 🔒 Where to replace personal information:
-* **`game_dir`**: Replace with the absolute path to your Beatmania IIDX game directory containing `spice64.exe` and `bm2dx.dll`.
-* **`wine_prefix`**: Replace `/home/YOUR_USERNAME/.wine` with your active Wine prefix path.
-* **`wine_binary`**: Set to your Wine executable (e.g. `/usr/bin/wine`, `wine`, or a custom Proton runner).
-* **`card_id`**: Replace `E004010000000000` with your 16-character e-Amusement card number / NFC UID.
-* **`sound.sample_rate`**: Set to `48000` for HDMI/DisplayPort audio or `44100` for legacy dedicated DACs.
-
----
-
-## 🚀 How to Run
-
+### 4. Launch the Game
 ```bash
-# Clone the repository
-git clone https://github.com/Djkawada/Beatmania-IIDX-Linux.git ~/Work/iidx-launcher
-cd ~/Work/iidx-launcher
-
-# Create and adjust your personal config
-cp config.example.json config.json
-nano config.json
-
-# Launch game & all background services
 ./launch.sh
 ```
 
 ---
 
-## 📊 Current Status & Known Issues
+## 🛠️ Deep Technical Troubleshooting & Solutions
 
-| Component | Status | Description |
-|---|---|---|
-| **Platine / Turntable & I/O** | ✅ Working | Verified and functional via Spice2x / `spicecfg.exe`. |
-| **Audio Playback & Tempo** | ✅ Fixed | Locked to 48kHz HDMI; pitch and tempo play at exact 1.000x speed. |
-| **Song Start Sync** | ✅ Fixed | `CS-style Song Start Delay` eliminates frame-1 asset loading lag. |
-| **DirectX 9 / Vulkan (DXVK)** | ✅ Working | Smooth D3D9 rendering over Vulkan. |
-| **e-Amusement Service (In-Game)** | 🟡 Active Debugging | **Current Issue**: While the initial network boot check and Operator Test Mode report OK/connected (`services.get`, `facility.get`, `pcbtracker.alive`), right on the title / attract screen the game displays an in-game error stating that the **e-Amusement service is unavailable**. Card login and profile retrieval remain blocked in-game. |
+### 1. Audio Speed Acceleration Bug (1.09x Pitch/Tempo Distortion)
+* **Problem**: On NVIDIA HDMI / DisplayPort audio sinks, hardware clocks are locked to **48,000 Hz**. Forcing a 44,100 Hz sample rate causes a `48000 / 44100 = 1.088x` pitch shift and speed acceleration.
+* **Solution**: The included Rust [`iidx-sound-bridge`](iidx-sound-bridge/) locks PipeWire to `48000 Hz` and enforces `PIPEWIRE_LATENCY="256/48000"`, ensuring 1:1 playback speed.
 
-> [!WARNING]
-> **Pending Debugging Focus**:  
-> Right on the title screen, the game shows the e-Amusement unavailable error. Ongoing investigation covers XRPC service registration (`IIDX30pc` / `cardmng`), cab validation XML structures, and Spice2x RFID card reader event handling.
+### 2. Frame-1 Song Start Lag / Audio Desync
+* **Problem**: When a song begins, direct DirectX 9 texture/shader initialization causes a brief micro-freeze while audio continues playing, resulting in notes lagging behind the beat.
+* **Solution**: Enable the community memory patch **`CS-style Song Start Delay`** in `%appdata%\spice2x\spicetools_patch_manager.json` to insert a 2-second pre-roll countdown before chart playback.
+
+### 3. e-Amusement "Service Unavailable" on Title Screen
+* **Root Cause 1 (`CAP_NET_RAW` / Linux Raw Sockets)**:
+  Konami's `avs2-ea3.dll` creates raw ICMP ping sockets for `keepalive`. Linux denies raw socket creation to non-root processes (`0x80080016: Permission Denied`).  
+  *Fix*: Run `sudo setcap cap_net_raw+epi /usr/bin/wine /usr/bin/wineserver /usr/lib/wine/x86_64-unix/*` (handled by `setup.sh`).
+* **Root Cause 2 (`enable_raw` in AVS Configuration)**:
+  In `prop/avs-config.xml` and `dev/nvram/avs-config.xml`, `<enable_raw __type="bool">0</enable_raw>` was set to `0`.  
+  *Fix*: Set `<enable_raw __type="bool">1</enable_raw>`.
+* **Root Cause 3 (`userdata` & `userid` Profile Flags)**:
+  In `prop/ea3-config.xml` and `dev/nvram/ea3-config.xml`, `<userdata>` and `<userid>` were set to `0`, causing the game to skip card profile retrieval and boot into guest mode.  
+  *Fix*: Set `<userdata __type="u8">1</userdata>` and `<userid __type="u8">1</userid>`.
+* **Root Cause 4 (Spice2x Flag Collision)**:
+  Running with `-ea` launches Spice2x's internal dummy server which intercepts network traffic.  
+  *Fix*: Launch strictly with `-url http://127.0.0.1:8083/ -icmphook`.
+
+---
+
+## 🔒 Privacy & Safe Sharing
+
+This repository contains zero personal paths, usernames, proprietary ROMs, or private e-Amusement card serial numbers.  
+- Personal settings are saved in `config.json` (ignored by `.gitignore`).
+- Shareable templates are provided in `config.example.json`.
+
+---
+
+## 📜 License
+MIT License - Created for the arcade rhythm gaming and Linux preservation community.

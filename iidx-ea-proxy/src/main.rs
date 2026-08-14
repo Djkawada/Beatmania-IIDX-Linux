@@ -6,7 +6,7 @@ use std::thread;
 use std::time::Duration;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about = "Native Rust XRPC Region Fixer Proxy for Beatmania IIDX")]
+#[command(author, version, about = "Native Rust XRPC Region & e-Amusement Fixer Proxy for Beatmania IIDX")]
 struct Args {
     /// Proxy listen port (default: 8083)
     #[arg(short, long, default_value_t = 8083)]
@@ -115,7 +115,7 @@ fn handle_client(mut client_stream: TcpStream, target_port: u16, listen_port: u1
         if i == 0 {
             new_request_headers.push(line.to_string());
         } else if line_lower.starts_with("host:") {
-            new_request_headers.push(format!("Host: 127.0.0.1:{}", target_port));
+            new_request_headers.push(format!("Host: 127.0.0.1:{}", listen_port));
         } else if line_lower.starts_with("x-compress:") {
             new_request_headers.push("X-Compress: none".to_string());
         } else if line_lower.starts_with("accept-encoding:") {
@@ -184,15 +184,19 @@ fn handle_client(mut client_stream: TcpStream, target_port: u16, listen_port: u1
     let listen_url = format!("http://127.0.0.1:{}", listen_port).into_bytes();
 
     replace_subslice(&mut body_vec, &target_url1, &listen_url_slash);
-    replace_subslice(&mut body_vec, &target_url1_n, &listen_url);
+    replace_subslice(&mut body_vec, &target_url1_n, &listen_url_slash);
     replace_subslice(&mut body_vec, &target_url2, &listen_url_slash);
-    replace_subslice(&mut body_vec, &target_url2_n, &listen_url);
+    replace_subslice(&mut body_vec, &target_url2_n, &listen_url_slash);
     replace_subslice(&mut body_vec, b"http://services.konami.net/", &listen_url_slash);
-    replace_subslice(&mut body_vec, b"http://services.konami.net", &listen_url);
+    replace_subslice(&mut body_vec, b"http://services.konami.net", &listen_url_slash);
     replace_subslice(&mut body_vec, b"http://eagate.573.jp/", &listen_url_slash);
-    replace_subslice(&mut body_vec, b"http://eagate.573.jp", &listen_url);
+    replace_subslice(&mut body_vec, b"http://eagate.573.jp", &listen_url_slash);
     replace_subslice(&mut body_vec, b"http://ea.573.jp/", &listen_url_slash);
     replace_subslice(&mut body_vec, b"http://eapass.573.jp/", &listen_url_slash);
+
+    // Clean up any double trailing slashes
+    let double_slash = format!("http://127.0.0.1:{}//", listen_port).into_bytes();
+    replace_subslice(&mut body_vec, &double_slash, &listen_url_slash);
 
     // 2. Rewrite Country Code & Region for official Japanese LDJ cabinet validation
     replace_subslice(&mut body_vec, b"<country __type=\"str\">AX</country>", b"<country __type=\"str\">JP</country>");
@@ -206,12 +210,51 @@ fn handle_client(mut client_stream: TcpStream, target_port: u16, listen_port: u1
     replace_subslice(&mut body_vec, "<countryjname __type=\"str\">不明</countryjname>".as_bytes(), "<countryjname __type=\"str\">日本</countryjname>".as_bytes());
     replace_subslice(&mut body_vec, "<countryjname>不明</countryjname>".as_bytes(), "<countryjname>日本</countryjname>".as_bytes());
 
-    // 3. Ensure cardmng service item is explicitly present in services.get if missing
-    let body_str_check = String::from_utf8_lossy(&body_vec);
-    if body_str_check.contains("<services") && !body_str_check.contains("name=\"cardmng\"") {
-        let cardmng_entry = format!("<item name=\"cardmng\" url=\"http://127.0.0.1:{}/\"/>\n", listen_port).into_bytes();
-        if let Some(pos) = find_subslice(&body_vec, b"</services>") {
-            body_vec.splice(pos..pos, cardmng_entry);
+    // 3. Ensure mode="operation" and status="0" on services response
+    let is_services = find_subslice(&body_vec, b"<services").is_some();
+    if is_services {
+        let body_str_check = String::from_utf8_lossy(&body_vec).to_string();
+        if !body_str_check.contains("mode=") {
+            replace_subslice(&mut body_vec, b"<services", b"<services mode=\"operation\" status=\"0\"");
+        }
+
+        // List of essential services expected by IIDX
+        let required_services = [
+            "facility",
+            "pcbtracker",
+            "message",
+            "pcbevent",
+            "package",
+            "eacoin",
+            "cardmng",
+            "userdata",
+            "local",
+            "local2",
+        ];
+
+        let mut missing_services = String::new();
+        for svc in &required_services {
+            if !body_str_check.contains(&format!("name=\"{}\"", svc)) {
+                missing_services.push_str(&format!("<item name=\"{}\" url=\"http://127.0.0.1:{}/\"/>\n", svc, listen_port));
+            }
+        }
+
+        if !missing_services.is_empty() {
+            if let Some(pos) = find_subslice(&body_vec, b"</services>") {
+                body_vec.splice(pos..pos, missing_services.into_bytes());
+            }
+        }
+    }
+
+    // 4. Ensure facility.get contains share/eacoin block
+    let is_facility = find_subslice(&body_vec, b"<facility").is_some();
+    if is_facility {
+        let body_str_facility = String::from_utf8_lossy(&body_vec).to_string();
+        if !body_str_facility.contains("<eacoin") {
+            let eacoin_share = b"<share><eacoin><supplylimit __type=\"u32\">100000</supplylimit><holdlimit __type=\"u32\">100000</holdlimit></eacoin></share>";
+            if let Some(pos) = find_subslice(&body_vec, b"</facility>") {
+                body_vec.splice(pos..pos, eacoin_share.iter().cloned());
+            }
         }
     }
 

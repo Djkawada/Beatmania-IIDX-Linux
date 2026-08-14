@@ -35,10 +35,14 @@ if [ -z "$WINE_BIN" ] || [ "$WINE_BIN" = "null" ] || [ ! -f "$WINE_BIN" ]; then
     WINE_BIN="wine"
 fi
 
-# Environment configuration for DirectX 9 (DXVK) and PipeWire audio
+# Environment configuration for DirectX 9 (DXVK), PipeWire audio & low-jitter threading
 export WINEPREFIX
 export PIPEWIRE_LATENCY="$PW_LATENCY"
 export PIPEWIRE_RATE="1/$SAMPLE_RATE"
+export WINEFSYNC=1
+export WINEESYNC=1
+export WINE_RT_PRIO=1
+export STAGING_AUDIO_DURATION=10000
 export WINEDLLOVERRIDES="d3d9=n;mmdevapi=n,b;dsound=n,b;mfplat=b;mf=b;quartz=b;devenum=b;wmadmod=b;wmvdecod=b"
 export WINEDEBUG="-all"
 export __compat_layer=RunAsInvoker
@@ -70,18 +74,9 @@ cleanup() {
 }
 trap cleanup INT TERM
 
-# Step 3: Check / Start Native Asphyxia Core (8084) & Region Fixer Proxy (8083)
-PROXY_BIN="$SCRIPT_DIR/iidx-ea-proxy/target/release/iidx-ea-proxy"
-PROXY_PORT=8083
-ASPHYXIA_PORT=8084
-
-if [ ! -f "$PROXY_BIN" ] || [ "$SCRIPT_DIR/iidx-ea-proxy/src/main.rs" -nt "$PROXY_BIN" ]; then
-    echo -e "${YELLOW}[*] Building / Updating Rust EA Proxy (iidx-ea-proxy)...${NC}"
-    cd "$SCRIPT_DIR/iidx-ea-proxy"
-    cargo build --release
-    cd "$SCRIPT_DIR"
-fi
-
+# Step 3: Start Asphyxia Core directly on port 8083
+pkill -f "iidx-ea-proxy" 2>/dev/null || true
+ASPHYXIA_PORT=8083
 chmod +x "$GAME_DIR/asphyxia-core" 2>/dev/null || true
 
 if ! curl -s "http://127.0.0.1:$ASPHYXIA_PORT/" >/dev/null 2>&1; then
@@ -105,24 +100,7 @@ if ! curl -s "http://127.0.0.1:$ASPHYXIA_PORT/" >/dev/null 2>&1; then
         fi
     done
 fi
-
-pkill -f "iidx-ea-proxy" 2>/dev/null || true
-sleep 0.2
-echo -e "${YELLOW}[*] Starting XRPC Japan Region Fixer Proxy (port $PROXY_PORT -> $ASPHYXIA_PORT)...${NC}"
-setsid "$PROXY_BIN" --port "$PROXY_PORT" --target-port "$ASPHYXIA_PORT" > "$SCRIPT_DIR/proxy.log" 2>&1 &
-PROXY_PID=$!
-disown $PROXY_PID 2>/dev/null || true
-
-COUNT=0
-while ! curl -s "http://127.0.0.1:$PROXY_PORT/" >/dev/null 2>&1; do
-    sleep 0.3
-    COUNT=$((COUNT + 1))
-    if [ $COUNT -ge 30 ]; then
-        echo -e "${RED}[-] Timeout waiting for Proxy on port $PROXY_PORT.${NC}"
-        exit 1
-    fi
-done
-echo -e "${GREEN}[+] e-Amusement Card Services active on http://127.0.0.1:$PROXY_PORT (Region: JP).${NC}"
+echo -e "${GREEN}[+] Asphyxia Core active on http://127.0.0.1:$ASPHYXIA_PORT.${NC}"
 
 # Step 4: Launch Beatmania IIDX
 WINDOW_FLAG=""
@@ -139,13 +117,13 @@ cd "$GAME_DIR"
 echo -e "${GREEN}[+] Launching Beatmania IIDX ($WINE_BIN)...${NC}"
 "$WINE_BIN" "$SPICE_EXE" \
     -cmdoverride \
-    -ea \
     -url "$NETWORK_URL" \
     $WINDOW_FLAG \
     -iidx \
     -nolauncher \
     -norelaunch \
     -noadmin \
+    -icmphook \
     -iidxsounddevice wasapi \
     $SOUND_FLAG
 
