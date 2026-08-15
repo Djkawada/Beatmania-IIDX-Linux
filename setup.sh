@@ -86,16 +86,16 @@ if [ -f "$SCRIPT_DIR/assets/icon.jpg" ]; then
 fi
 cat <<EOF > "$HOME/.local/share/applications/beatmania-iidx.desktop"
 [Desktop Entry]
-Name=Beatmania IIDX 30 RESIDENT
+Name=Beatmania IIDX
 GenericName=Arcade Rhythm Game
-Comment=Beatmania IIDX 30 RESIDENT (Linux Arcade Runner with PipeWire 48kHz Audio & e-Amusement)
+Comment=Beatmania IIDX (Linux Arcade Runner with PipeWire 48kHz Audio & e-Amusement)
 Exec=$SCRIPT_DIR/launch.sh
 Path=$SCRIPT_DIR
 Icon=$HOME/.local/share/icons/beatmania-iidx.jpg
 Terminal=false
 Type=Application
 Categories=Game;ArcadeGame;AudioVideo;
-Keywords=beatmania;iidx;bemani;konami;resident;arcade;rhythm;
+Keywords=beatmania;iidx;bemani;konami;arcade;rhythm;
 StartupNotify=true
 StartupWMClass=spice64.exe
 EOF

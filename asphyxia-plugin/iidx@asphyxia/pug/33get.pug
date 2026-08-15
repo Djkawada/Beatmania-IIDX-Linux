@@ -1,0 +1,108 @@
+IIDX33pc(status="0" qproback=settings.qpro_back)
+  pcdata(id=profile.iidxid idstr=profile.iidxidstr name=profile.name pid=profile.pid spnum=pc_data.spnum dpnum=0 sach=pc_data.sach dach=pc_data.dach mode=pc_data.mode category="0" pmode=pc_data.pmode ngrade=pc_data.ngrade rtype=pc_data.rtype naviflg="0" bgnasst="0" player_kind=pc_data.player_kind sp_opt=pc_data.sp_opt dp_opt=pc_data.dp_opt dp_opt2=pc_data.dp_opt2 gpos=pc_data.gpos s_sorttype=pc_data.s_sorttype d_sorttype=pc_data.d_sorttype s_pace=pc_data.s_pace d_pace=pc_data.d_pace s_gno=pc_data.s_gno d_gno=pc_data.d_gno s_sub_gno=pc_data.s_sub_gno d_sub_gno=pc_data.d_sub_gno s_gtype=pc_data.s_gtype d_gtype=pc_data.d_gtype s_sdlen=pc_data.s_sdlen d_sdlen=pc_data.d_sdlen s_sdtype=pc_data.s_sdtype d_sdtype=pc_data.d_sdtype s_timing=pc_data.s_timing d_timing=pc_data.d_timing s_notes=pc_data.s_notes d_notes=pc_data.d_notes s_judge=pc_data.s_judge d_judge=pc_data.d_judge s_judgeAdj=pc_data.s_judgeAdj d_judgeAdj=pc_data.d_judgeAdj s_hispeed=pc_data.s_hispeed d_hispeed=pc_data.d_hispeed s_liflen=pc_data.s_liflen d_liflen=pc_data.d_liflen s_disp_judge=pc_data.s_disp_judge d_disp_judge=pc_data.d_disp_judge s_opstyle=pc_data.s_opstyle d_opstyle=pc_data.d_opstyle s_graph_score=pc_data.s_graph_score d_graph_score=pc_data.d_graph_score s_auto_scrach=pc_data.s_auto_scrach d_auto_scrach=pc_data.d_auto_scrach s_gauge_disp=pc_data.s_gauge_disp d_gauge_disp=pc_data.d_gauge_disp s_lane_brignt=pc_data.s_lane_brignt d_lane_brignt=pc_data.d_lane_brignt s_camera_layout=pc_data.s_camera_layout d_camera_layout=pc_data.d_camera_layout s_ghost_score=pc_data.s_ghost_score d_ghost_score=pc_data.d_ghost_score s_tsujigiri_disp=pc_data.s_tsujigiri_disp d_tsujigiri_disp=pc_data.d_tsujigiri_disp s_auto_adjust=pc_data.s_auto_adjust d_auto_adjust=pc_data.d_auto_adjust s_timing_split=pc_data.s_timing_split d_timing_split=pc_data.d_timing_split s_visualization=pc_data.s_visualization d_visualization=pc_data.d_visualization s_classic_hispeed=pc_data.s_classic_hispeed d_classic_hispeed=pc_data.d_classic_hispeed movie_thumbnail="0" s_laneobj_brignt="0" d_laneobj_brignt="0")
+  lightning_play_data(spnum=lightning_playdata.sp_num dpnum=lightning_playdata.dp_num)
+  lightning_setting(headphone_vol=lightning_settings.headphone_vol resistance_sp_left=lightning_settings.resistance_sp_left resistance_sp_right=lightning_settings.resistance_sp_right resistance_dp_left=lightning_settings.resistance_dp_left resistance_dp_right=lightning_settings.resistance_dp_right keyboard_kind=lightning_settings.keyboard_kind brightness_bg=lightning_settings.brightness brightness_concentration=lightning_settings.brightness assistant_disp_type="0" assistant_last_tab="0" assistant_chara="0")
+    light(__type="bool" __count="10") #{lightning_settings.light[0]} #{lightning_settings.light[1]} #{lightning_settings.light[2]} #{lightning_settings.light[3]} #{lightning_settings.light[4]} #{lightning_settings.light[5]} #{lightning_settings.light[6]} #{lightning_settings.light[7]} #{lightning_settings.light[8]} #{lightning_settings.light[9]}
+    slider(__type="s32" __count="7") #{lightning_settings.vefx[0]} #{lightning_settings.vefx[1]} #{lightning_settings.vefx[2]} #{lightning_settings.vefx[3]} #{lightning_settings.vefx[4]} #{lightning_settings.vefx[5]} #{lightning_settings.vefx[6]}
+    concentration(__type="bool") #{lightning_settings.concentration}
+  weekly_achieve_sp(weekly_achieve_0="0" weekly_achieve_1="0" weekly_achieve_2="0" weekly_achieve_3="0" weekly_achieve_4="0")
+  weekly_achieve_dp(weekly_achieve_0="0" weekly_achieve_1="0" weekly_achieve_2="0" weekly_achieve_3="0" weekly_achieve_4="0")
+  weekly_rating_sp(weekly_rating_1="0" weekly_rating_2="0" weekly_rating_3="0")
+  weekly_rating_dp(weekly_rating_1="0" weekly_rating_2="0" weekly_rating_3="0")
+  spdp_rival(flg="0")
+  bind_eaappli
+  ea_premium_course
+  dellar_bonus(rate="0")
+  kac_entry_info
+    enable_kac_deller
+    disp_kac_mark
+    is_kac_entry
+    is_kac_evnet_entry
+  secret
+    flg1(__type="s64" __count="3") -1 -1 -1
+    flg2(__type="s64" __count="3") -1 -1 -1
+    flg3(__type="s64" __count="3") -1 -1 -1
+    flg4(__type="s64" __count="3") -1 -1 -1
+    flg5(__type="s64" __count="3") -1 -1 -1
+  leggendaria
+    flg1(__type="s64" __count="3") -1 -1 -1
+    flg2(__type="s64" __count="3") -1 -1 -1
+  music_memo
+    - for (let m of mArray)
+      folder(play_style=m.play_style folder_id=m.folder_idx name=m.folder_name)
+        music_id(__type="s32" __count="10") #{m.music_ids[0]} #{m.music_ids[1]} #{m.music_ids[2]} #{m.music_ids[3]} #{m.music_ids[4]} #{m.music_ids[5]} #{m.music_ids[6]} #{m.music_ids[7]} #{m.music_ids[8]} #{m.music_ids[9]}
+  music_filter
+    - for (let f of fArray)
+      folder(play_style=f.play_style folder_id=f.folder_id filter_id=f.filter_id value0=f.value0 value1=f.value1 sort="0")
+        is_valid(__type="bool") #{f.is_valid}
+  qpro_secret
+    head(__type="s64" __count="7") -1 -1 -1 -1 -1 -1 -1
+    hair(__type="s64" __count="7") -1 -1 -1 -1 -1 -1 -1
+    face(__type="s64" __count="7") -1 -1 -1 -1 -1 -1 -1
+    body(__type="s64" __count="7") -1 -1 -1 -1 -1 -1 -1
+    hand(__type="s64" __count="7") -1 -1 -1 -1 -1 -1 -1
+    back(__type="s64" __count="7") -1 -1 -1 -1 -1 -1 -1
+  grade(sgid=pc_data.sgid dgid=pc_data.dgid)
+    - for (let d of dArray)
+      g(__type="u8" __count="4") #{d[0]} #{d[1]} #{d[2]} #{d[3]}
+  pskin(__type="s32" __count="20") #{appendsetting} #{settings.note_burst} #{settings.bomb_size} #{settings.turntable} #{settings.judge_font} #{settings.note_skin} #{settings.note_size} #{settings.disable_musicpreview} #{settings.vefx_lock} #{settings.effect} #{settings.menu_music} #{settings.disable_hcn_color} #{settings.first_note_preview} #{settings.lane_cover} #{settings.pacemaker_cover} #{settings.lift_cover} #{settings.note_beam} #{settings.note_beam_size} #{settings.full_combo_splash} #{settings.frame}
+  vskin(__type="s16" __count="4") #{settings.premium_skin} #{settings.premium_bg} 0 0
+  vskin_customize_setting(entry_bg_brightness="0")
+  qprodata(__type="u32" __count="6") #{settings.qpro_head} #{settings.qpro_hair} #{settings.qpro_face} #{settings.qpro_hand} #{settings.qpro_body} #{settings.qpro_back}
+  rlist
+    - for (let rd of rArray)
+      rival(spdp=rd.play_style id=rd.profile[2] id_str=rd.profile[3] djname=rd.profile[0] pid=rd.profile[1] sg=rd.pc_data[0] dg=rd.pc_data[1] sa=rd.pc_data[2] da=rd.pc_data[3])
+        is_robo(__type="bool") rd.is_robo
+        qprodata(head=rd.qprodata[1] hair=rd.qprodata[0] face=rd.qprodata[2] hand=rd.qprodata[4] body=rd.qprodata[3] back=rd.qprodata[5])
+        shop(name=shop_data.shop_name)
+  notes_radar(style="0")
+    radar_score(__type="s32" __count="6") #{pc_data.spradar[0]} #{pc_data.spradar[1]} #{pc_data.spradar[2]} #{pc_data.spradar[3]} #{pc_data.spradar[4]} #{pc_data.spradar[5]}
+  notes_radar(style="1")
+    radar_score(__type="s32" __count="6") #{pc_data.dpradar[0]} #{pc_data.dpradar[1]} #{pc_data.dpradar[2]} #{pc_data.dpradar[3]} #{pc_data.dpradar[4]} #{pc_data.dpradar[5]}
+  notes_radar_old(style="0")
+    radar_score(__type="s32" __count="6") #{pc_data.spradar[0]} #{pc_data.spradar[1]} #{pc_data.spradar[2]} #{pc_data.spradar[3]} #{pc_data.spradar[4]} #{pc_data.spradar[5]}
+  notes_radar_old(style="1")
+    radar_score(__type="s32" __count="6") #{pc_data.dpradar[0]} #{pc_data.dpradar[1]} #{pc_data.dpradar[2]} #{pc_data.dpradar[3]} #{pc_data.dpradar[4]} #{pc_data.dpradar[5]}
+  weekly(mid="-1" wid="1")
+  visitor(anum="1" snum="1" pnum="2" vs_flg="1")
+  step(enemy_damage=pc_data.enemy_damage progress=pc_data.progress total_point=pc_data.total_point enemy_defeat_flg=pc_data.enemy_defeat_flg sp_level=pc_data.sp_level dp_level=pc_data.dp_level sp_level_h="0" dp_level_h="0" sp_level_exh="0" dp_level_exh="0" sp_fluctuation=pc_data.sp_fluctuation dp_fluctuation=pc_data.dp_fluctuation mission_clear_num=pc_data.mission_clear_num sp_mplay=pc_data.sp_mplay dp_mplay=pc_data.dp_mplay tips_read_list=pc_data.tips_read_list)
+    is_track_ticket(__type="bool") 1
+  packinfo(pack_id="1" music_0="-1" music_1="-1" music_2="-1")
+  achievements(pack="0" pack_comp="0" last_weekly="0" weekly_num="0" visit_flg="0" rival_crush="0")
+  deller(deller=pc_data.deller rate="0")
+  orb_data(rest_orb="100" present_orb="100")
+  qpro_ticket(ticket_num="100" total_ticket_num="100")
+  old_linkage_secret_flg(song_battle="-1" bemani_mixup="-1" ccj_linkage="-1" triple_tribe="-1")
+  arena_data(play_num="2" play_num_sp="1" play_num_dp="1" prev_best_class_sp="20" prev_best_class_dp="20")
+    achieve_data(play_style="0" arena_class="20" rating_value="20" now_top_class_continuing="0" best_top_class_continuing="0" win_count="0" now_winning_streak_count="0" best_winning_streak_count="0" perfect_win_count="0" counterattack_num="0" mission_clear_num="0")
+    achieve_data(play_style="1" arena_class="20" rating_value="20" now_top_class_continuing="0" best_top_class_continuing="0" win_count="0" now_winning_streak_count="0" best_winning_streak_count="0" perfect_win_count="0" counterattack_num="0" mission_clear_num="0")
+    cube_data(season_id="0" cube="0")
+    chat_data(chat_type_0="CHAT CUSTOM 1" chat_type_1="CHAT CUSTOM 2" chat_type_2="CHAT CUSTOM 3" chat_type_3="CHAT CUSTOM 4")
+      is_chat_0(__type="bool") 1
+      is_chat_1(__type="bool") 1
+      is_chat_2(__type="bool") 1
+      is_chat_3(__type="bool") 1
+  pskin_customize_flg(skin_frame_flg="-1" skin_turntable_flg="-1" skin_bomb_flg="-1" skin_bgm_flg="-1" skin_lane_flg0="-1" skin_lane_flg1="-1" skin_lane_flg2="-1" skin_lane_flg3="-1" skin_lane_flg4="-1" skin_lane_flg5="-1" skin_lane_flg6="-1" skin_notes_flg="-1" skin_fullcombo_flg="-1" skin_keybeam_flg="-1" skin_judgestring_flg="-1")
+  vskin_customize_flg(skin_subicon_flg="-1" skin_subbg_flg0="-1" skin_subbg_flg1="-1" skin_entry_flg0="-1" skin_entry_flg1="-1")
+  event_1(event_play_num="0" last_select_room_id="0")
+    is_skip(__type="bool") 0
+  ultimate_mobile_link(music_list="-1")
+    link_flag
+  valkyrie_linkage(music_list_1="-1" music_list_2="-1" music_list_3="-1")
+  language_setting(language=profile.language)
+  movie_agreement(agreement_version="1")
+  movie_setting
+    hide_name(__type="bool") 0
+  world_tourism
+    - for (let wd of wArray)
+      tour_data(tour_id=wd.tour_id progress=wd.progress)
+  world_tourism_secret_flg
+    flg1(__type="s64" __count="3") -1 -1 -1
+    flg2(__type="s64" __count="3") -1 -1 -1
+  world_tourism_setting
+    booster(__type="bool") 1
+  bpl_s5_supporter(support_team="0")
+  badge
+    badge_data(category_id="0" badge_flg_id="0" badge_flg="0")
+    badge_equip(slot="0" category_id="0" badge_flg_id="0")
+      equip_flg(__type="bool") 0

@@ -1,0 +1,26 @@
+{
+    "auto_apply": [
+        "LDJ-695c6a76_a071dc",
+        "LDJ:J:E:A:2026011300",
+        "bm2dx.dll",
+        "*"
+    ],
+    "patches_enabled": [
+        "Force LDJ Custom Timing/Adapter FPS",
+        "Bypass Lightning Monitor Error",
+        "Bypass CAMERA DEVICE ERROR Prompt",
+        "Disable Background Movies",
+        "Shared Mode WASAPI",
+        "4fc15e833153aa33be2a907192bf0f26d8956bbe52e9d32f3ce3b82cdbf9a715",
+        "dfcc84cf07461e450c6e245b569220b31565455721886f1819b85b8a977d5896",
+        "d7c11020cb288aa777dceb9ba39efd47cce6caef818c76940c31381e3cbe0f2b",
+        "ffa616ce1376e46db2b8ab4a4ca4823d81fc14c61e4ef9262e822f75e6432c3c"
+    ],
+    "union_patches_enabled": {
+        "8afca3d7ffc1fbe1244969f111812c64ba2d7848d3564a7bd653ecf743ecd604": "144 FPS",
+        "Choose Fullscreen Monitor Check FPS Target": "144 FPS",
+        "Choose LDJ Custom Timing/Adapter FPS": "144 FPS"
+    },
+    "integer_patches_enabled": {},
+    "remote_url_history": []
+}
