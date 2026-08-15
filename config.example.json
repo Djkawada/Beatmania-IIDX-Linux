@@ -11,8 +11,8 @@
     "device_type": "wasapi",
     "wasapi_mode": "shared",
     "sample_rate": 48000,
-    "buffer_quantum": 256,
-    "pipewire_latency": "256/48000"
+    "buffer_quantum": 128,
+    "pipewire_latency": "128/48000"
   },
   "display": {
     "windowed": true

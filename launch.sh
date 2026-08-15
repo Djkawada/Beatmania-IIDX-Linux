@@ -42,10 +42,14 @@ export PIPEWIRE_RATE="1/$SAMPLE_RATE"
 export WINEFSYNC=1
 export WINEESYNC=1
 export WINE_RT_PRIO=1
-export STAGING_AUDIO_DURATION=10000
-export WINEDLLOVERRIDES="d3d9=n;mmdevapi=n,b;dsound=n,b;mfplat=b;mf=b;quartz=b;devenum=b;wmadmod=b;wmvdecod=b"
+export STAGING_AUDIO_DURATION=3000
+export WINEDLLOVERRIDES="d3d9=n"
 export WINEDEBUG="-all"
 export __compat_layer=RunAsInvoker
+
+# MangoHud configuration: lightweight top-right HUD
+export MANGOHUD=1
+export MANGOHUD_CONFIG="position=top-right,fps,frametime=0,no_display=0,font_size=18,background_alpha=0.25,round_corners=6"
 
 # Step 1: Ensure Rust sound bridge binary exists
 if [ ! -f "$SOUND_BRIDGE_BIN" ]; then
@@ -72,7 +76,7 @@ cleanup() {
     pw-metadata -n settings 0 clock.force-rate 0 2>/dev/null || true
     echo -e "${GREEN}[+] Cleanup complete.${NC}"
 }
-trap cleanup INT TERM
+trap cleanup INT TERM EXIT
 
 # Step 3: Start Asphyxia Core directly on port 8083
 pkill -f "iidx-ea-proxy" 2>/dev/null || true
@@ -108,24 +112,40 @@ if [ "$WINDOWED" = "true" ]; then
     WINDOW_FLAG="-w"
 fi
 
-SOUND_FLAG="-wasapishared"
+SOUND_FLAG="-wasapishared -lowlatencysharedaudio"
 if [ "$WASAPI_MODE" = "exclusive" ]; then
     SOUND_FLAG="-wasapiexclusive"
 fi
 
+DEVICE_TYPE=$(jq -r '.sound.device_type // "wasapi"' "$CONFIG_FILE")
+
 cd "$GAME_DIR"
-echo -e "${GREEN}[+] Launching Beatmania IIDX ($WINE_BIN)...${NC}"
-"$WINE_BIN" "$SPICE_EXE" \
-    -cmdoverride \
-    -url "$NETWORK_URL" \
-    $WINDOW_FLAG \
-    -iidx \
-    -nolauncher \
-    -norelaunch \
-    -noadmin \
-    -icmphook \
-    -iidxsounddevice wasapi \
-    $SOUND_FLAG
+if [ "$DEVICE_TYPE" = "asio" ]; then
+    echo -e "${GREEN}[+] Launching Beatmania IIDX with WineASIO + pw-jack (< 2ms Keysound Latency)...${NC}"
+    pw-jack mangohud "$WINE_BIN" "$SPICE_EXE" \
+        -cmdoverride \
+        -url "$NETWORK_URL" \
+        $WINDOW_FLAG \
+        -iidx \
+        -nolauncher \
+        -norelaunch \
+        -noadmin \
+        -icmphook \
+        -iidxsounddevice asio \
+        -iidxasio "WineASIO"
+else
+    echo -e "${GREEN}[+] Launching Beatmania IIDX ($WINE_BIN) with MangoHud...${NC}"
+    mangohud "$WINE_BIN" "$SPICE_EXE" \
+        -cmdoverride \
+        -url "$NETWORK_URL" \
+        $WINDOW_FLAG \
+        -iidx \
+        -nolauncher \
+        -norelaunch \
+        -noadmin \
+        -icmphook \
+        -iidxsounddevice wasapi \
+        $SOUND_FLAG
+fi
 
 echo -e "${YELLOW}[*] Game closed naturally.${NC}"
-cleanup
