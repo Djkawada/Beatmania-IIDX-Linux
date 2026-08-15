@@ -20,9 +20,9 @@ echo -e "${CYAN}      BEATMANIA IIDX LINUX SETUP & ENVIRONMENT INITIALIZER      
 echo -e "${CYAN}================================================================${NC}"
 
 # 1. Dependency checks
-echo -e "\n${YELLOW}[1/4] Checking system dependencies...${NC}"
+echo -e "\n${YELLOW}[1/4] Checking system dependencies & media codecs...${NC}"
 MISSING_DEPS=()
-for cmd in wine cargo rustc jq curl; do
+for cmd in wine cargo rustc jq curl mangohud; do
     if ! command -v "$cmd" &>/dev/null; then
         MISSING_DEPS+=("$cmd")
     fi
@@ -30,11 +30,11 @@ done
 
 if [ ${#MISSING_DEPS[@]} -ne 0 ]; then
     echo -e "${RED}[-] Missing required dependencies: ${MISSING_DEPS[*]}${NC}"
-    echo -e "${YELLOW}[!] On Arch Linux / Omarchy: sudo pacman -S wine-staging rust jq curl${NC}"
-    echo -e "${YELLOW}[!] On Ubuntu / Debian:     sudo apt install wine rustc cargo jq curl${NC}"
+    echo -e "${YELLOW}[!] On Arch Linux / Omarchy: sudo pacman -S wine-staging rust jq curl mangohud gst-plugins-ugly gst-plugins-bad gst-libav${NC}"
+    echo -e "${YELLOW}[!] On Ubuntu / Debian:     sudo apt install wine rustc cargo jq curl mangohud gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad gstreamer1.0-libav${NC}"
     exit 1
 fi
-echo -e "${GREEN}[+] All core system tools are installed.${NC}"
+echo -e "${GREEN}[+] All core system tools and MangoHud are installed.${NC}"
 
 # 2. Grant CAP_NET_RAW capability to Wine for e-Amusement ICMP Keepalive
 echo -e "\n${YELLOW}[2/4] Configuring Linux Network Capabilities for e-Amusement (CAP_NET_RAW)...${NC}"
