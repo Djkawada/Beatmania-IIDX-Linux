@@ -1,13 +1,13 @@
 [Desktop Entry]
-Name=Beatmania IIDX 30 RESIDENT
+Name=Beatmania IIDX
 GenericName=Arcade Rhythm Game
-Comment=Beatmania IIDX 30 RESIDENT (Linux Arcade Runner with PipeWire 48kHz Audio & e-Amusement)
+Comment=Beatmania IIDX (Linux Arcade Runner with PipeWire 48kHz Audio & e-Amusement)
 Exec=bash -c "cd $(dirname %k) && ./launch.sh"
 Path=
 Icon=beatmania-iidx
 Terminal=false
 Type=Application
 Categories=Game;ArcadeGame;AudioVideo;
-Keywords=beatmania;iidx;bemani;konami;resident;arcade;rhythm;
+Keywords=beatmania;iidx;bemani;konami;arcade;rhythm;
 StartupNotify=true
 StartupWMClass=spice64.exe

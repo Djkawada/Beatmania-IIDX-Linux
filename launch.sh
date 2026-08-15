@@ -80,6 +80,8 @@ trap cleanup INT TERM EXIT
 
 # Step 3: Start Asphyxia Core directly on port 8083
 pkill -f "iidx-ea-proxy" 2>/dev/null || true
+pkill -f "asphyxia-core" 2>/dev/null || true
+sleep 0.5
 ASPHYXIA_PORT=8083
 chmod +x "$GAME_DIR/asphyxia-core" 2>/dev/null || true
 
